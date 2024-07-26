@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { v4 as uuidv4 } from 'uuid';
+import {Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
 
 const nodeTypes = {
   START: 'start', // start is a special decision node can not be deleted.
@@ -78,6 +79,9 @@ const TreeVisualization = () => {
   const [newNode, setNewNode] = useState({});
   const [selectedNode, setSelectedNode] = useState(null);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
+  const [showEditNodeDialog, setShowEditNodeDialog] = useState(false);
+  const [showAddNodeDialog, setShowAddNodeDialog] = useState(false); 
+  const [showDeleteNodeDialog, setShowDeleteNodeDialog] = useState(false);
   const treeContainerRef = useRef(null);
 
   useEffect(() => {
@@ -89,6 +93,27 @@ const TreeVisualization = () => {
       });
     }
   }, [treeContainerRef.current]);
+
+  const editNode = () => {
+    const updatedTree = { ...treeData };
+    console.log('updatedTree:', updatedTree);
+    console.log('selectedNode:', selectedNode);
+    const { ...nodeDetails } = selectedNode;
+    console.log('Edit nodeDetails:', nodeDetails);
+    console.log('selectedNode:', selectedNode);
+    const editNodeRecursive = (node) => {
+      if (node.id === selectedNode.id) {
+        node.name = nodeDetails.name;
+        node.cost = nodeDetails.cost;
+        node.probability = nodeDetails.probability;
+      } else if (node.children) {
+        node.children.forEach(editNodeRecursive);
+      }
+    };
+    editNodeRecursive(updatedTree);
+    setTreeData(updatedTree);
+    setSelectedNode(null);
+  };
 
   const addNode = () => {
     const updatedTree = { ...treeData };
@@ -158,19 +183,108 @@ const TreeVisualization = () => {
     }
   };
 
-  const handleChange = (e) => {
+  const handleAddNodeChange = (e) => {
     const { name, value } = e.target;
     setNewNode((prevNode) => ({ ...prevNode, [name]: value }));
   };
 
+  const handleSelectedNodeChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedNode((prevNode) => ({ ...prevNode, [name]: value }));
+  };
+
   return (
     <div className="container">
+
+      <Dialog open={showAddNodeDialog} onClose={() => {setShowAddNodeDialog(false)}}>
+        <DialogTitle>Add a new Node</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Please enter the details of the new node.
+          </DialogContentText>
+          {newNode.nodeType === nodeTypes.DECISION && (
+            <>
+              <label>
+                                Decision Point:
+                <input type="text" name="name" onChange={handleAddNodeChange} />
+              </label>
+            </>
+          )}
+          {newNode.nodeType === nodeTypes.ACTION && (
+            <>
+                          <label>
+                                Action Name:
+                <input type="text" name="name" onChange={handleAddNodeChange} />
+              </label>
+              <label>
+                                Cost:
+                <input type="number" name="cost" onChange={handleAddNodeChange} />
+              </label>
+              <label>
+                                Probability:
+                <input type="number" name="probability" onChange={handleAddNodeChange} />
+              </label>
+            </>
+          )}
+          {newNode.nodeType === nodeTypes.OUTCOME && (
+            <>
+                          <label>
+                                Outcome:
+                <input type="text" name="name" onChange={handleAddNodeChange} />
+              </label>
+              <label>
+                                Cost:
+                <input type="number" name="cost" onChange={handleAddNodeChange} />
+              </label>
+              <label>
+                                Probability:
+                <input type="number" name="probability" onChange={handleAddNodeChange} />
+              </label>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {setShowAddNodeDialog(false)}} color="error" variant="contained">Cancel</Button>
+          <Button onClick={() => {addNode(); setShowAddNodeDialog(false)}} color="primary" autoFocus variant="contained">Add Node</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showDeleteNodeDialog} onClose={() => {setShowDeleteNodeDialog(false)}}>
+        <DialogTitle>Delete Selected Node</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete the selected node?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {setShowDeleteNodeDialog(false)}} color="error" variant="contained" autoFocus>Cancel</Button>
+          <Button onClick={() => {deleteNode(); setShowDeleteNodeDialog(false)}} color="primary" variant="contained">Delete Node</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={showEditNodeDialog} onClose={() => {setShowEditNodeDialog(false)}}>
+        <DialogTitle>Edit Selected Node</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Please enter the details of the selected node.
+          </DialogContentText>
+          <label> Name: <input type="text" name="name" onChange={handleSelectedNodeChange} /></label>
+          <label> Cost: <input type="number" name="cost" onChange={handleSelectedNodeChange} /></label>
+          <label> Probability: <input type="number" name="probability" onChange={handleSelectedNodeChange} /></label>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {setShowEditNodeDialog(false)}} color="error" variant="contained">Cancel</Button>
+          <Button onClick={() => {editNode(); setShowEditNodeDialog(false)}} color="primary" autoFocus variant="contained">Edit Node</Button>
+        </DialogActions>
+      </Dialog>
+      
       <div className="modal-panel">
-        <h2>Edit Graph by Select a Node</h2>
+      <h1>Decision Tree Visualization</h1>
+
         {selectedNode && (
           <>
           <h3>Selected node</h3>
-          <pre>{JSON.stringify(selectedNode, null)}</pre>
+          {/* <pre>{JSON.stringify(selectedNode, null)}</pre> */}
           <div>
             <p>Node Type: {selectedNode.nodeType}</p>
             <p>Name: {selectedNode.name}</p>
@@ -178,55 +292,17 @@ const TreeVisualization = () => {
             <p>Probability: {selectedNode.probability}</p>
           </div>
         
-        <h3>Create a new node</h3>
-        {newNode.nodeType === nodeTypes.DECISION && (
-          <>
-            <label>
-              Decision Point:
-              <input type="text" name="name" onChange={handleChange} />
-            </label>
-          </>
-        )}
-        {newNode.nodeType === nodeTypes.ACTION && (
-          <>
-            <label>
-              Action Name:
-              <input type="text" name="name" onChange={handleChange} />
-            </label>
-            <label>
-              Cost:
-              <input type="number" name="cost" onChange={handleChange} />
-            </label>
-            <label>
-              Probability:
-              <input type="number" name="probability" onChange={handleChange} />
-            </label>
-          </>
-        )}
-        {newNode.nodeType === nodeTypes.OUTCOME && (
-          <>
-            <label>
-              Outcome:
-              <input type="text" name="name" onChange={handleChange} />
-            </label>
-            <label>
-              Cost:
-              <input type="number" name="cost" onChange={handleChange} />
-            </label>
-            <label>
-              Probability:
-              <input type="number" name="probability" onChange={handleChange} />
-            </label>
-          </>
-        )}
-        <button onClick={addNode}>Add Node</button>
-        <button onClick={deleteNode}>Delete Selected Node</button>
-        
+        {/* provide a nice layout of three buttons */}
+        <Stack spacing={2} direction="column">
+        <Button onClick={() => {setShowAddNodeDialog(true)}} color='primary' variant="contained">Add Node</Button>
+        <Button onClick={() => {setShowDeleteNodeDialog(true)}} color="error" variant="contained">Delete Selected Node</Button>
+        <Button onClick={() => {setShowEditNodeDialog(true)}} color="primary" variant="contained">Edit Selected Node</Button>
+        </Stack>
           </>
           )
         }
-        <h2>Tree Details</h2>
-        <pre>{JSON.stringify(treeData, null, 2)}</pre>
+        {/* <h2>Tree Details</h2>
+        <pre>{JSON.stringify(treeData, null, 2)}</pre> */}
       </div>
       <div className="tree-panel" ref={treeContainerRef}>
         <Tree data={treeData} collapsible={false} translate={translate} onNodeClick={handleNodeClick} orientation={"vertical"} renderCustomNodeElement={(rd3tProps) => renderCustomNodeElement({ ...rd3tProps, toggleNode: handleNodeClick })}/>
