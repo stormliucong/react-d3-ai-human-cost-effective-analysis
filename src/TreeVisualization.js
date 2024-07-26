@@ -10,6 +10,43 @@ const nodeTypes = {
   EXIT: 'exit', // exit is a special outcome node can not have children.
 };
 
+const nodeColors = {
+  START: 'lightblue',
+  DECISION: 'lightgreen',
+  ACTION: 'lightyellow',
+  OUTCOME: 'lightcoral',
+  EXIT: 'lightgray',
+}
+
+const renderCustomNodeElement = ({ nodeDatum, toggleNode }) => {
+  let color;
+  switch (nodeDatum.nodeType) {
+    case nodeTypes.START:
+      color = nodeColors.START;
+      break;
+    case nodeTypes.DECISION:
+      color = nodeColors.DECISION;
+      break;
+    case nodeTypes.ACTION:
+      color = nodeColors.ACTION;
+      break;
+    case nodeTypes.OUTCOME:
+      color = nodeColors.OUTCOME;
+      break;
+    default:
+      color = nodeColors.EXIT;
+  }
+
+  return (
+    <g>
+      <circle fill={color} r="20" onClick={() => toggleNode(nodeDatum)}/>
+        <text fill="black" strokeWidth="1" x="30">
+                    {nodeDatum.name}
+        </text>
+    </g>
+  );
+};
+
 const initialTreeData = {
   id: uuidv4(), // Unique identifier for the node
   name: 'Start',
@@ -99,11 +136,11 @@ const TreeVisualization = () => {
     setSelectedNode(null);
   };
 
-  const handleNodeClick = (node) => {
-    console.log('Node clicked:', node);
-    setSelectedNode(node.data);
+  const handleNodeClick = (nodeDatum) => {
+    console.log('Node clicked:', nodeDatum);
+    setSelectedNode(nodeDatum);
 
-    const nodeType = node.data.nodeType;
+    const nodeType = nodeDatum.nodeType;
     console.log('selected nodeType:', nodeType);
     let newNodeType = null;
 
@@ -192,7 +229,7 @@ const TreeVisualization = () => {
         <pre>{JSON.stringify(treeData, null, 2)}</pre>
       </div>
       <div className="tree-panel" ref={treeContainerRef}>
-        <Tree data={treeData} collapsible={false} translate={translate} onNodeClick={handleNodeClick} />
+        <Tree data={treeData} collapsible={false} translate={translate} onNodeClick={handleNodeClick} orientation={"vertical"} renderCustomNodeElement={(rd3tProps) => renderCustomNodeElement({ ...rd3tProps, toggleNode: handleNodeClick })}/>
       </div>
       
     </div>
