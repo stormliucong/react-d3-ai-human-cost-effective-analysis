@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { v4 as uuidv4 } from 'uuid';
-import {Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import {Alert, Switch, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel} from '@mui/material';
 
 const nodeTypes = {
   START: 'start', // start is a special decision node can not be deleted.
@@ -119,6 +119,9 @@ const TreeVisualization = () => {
     const updatedTree = { ...treeData };
     console.log('updatedTree:', updatedTree); 
     const { ...nodeDetails } = newNode;
+    if (newNode.nodeType === nodeTypes.EXIT) {
+      nodeDetails.name = 'Exit';
+    }
     nodeDetails.name = nodeDetails.name || 'New Node';
     nodeDetails.cost = nodeDetails.cost || 0;
     nodeDetails.probability = nodeDetails.probability || 0;
@@ -169,13 +172,17 @@ const TreeVisualization = () => {
     console.log('selected nodeType:', nodeType);
     let newNodeType = null;
 
+    if (nodeType === nodeTypes.EXIT) {
+      return;
+    }
+
     if (nodeType === nodeTypes.DECISION || nodeType === nodeTypes.START) {
       newNodeType = nodeTypes.ACTION;
     } else if (nodeType === nodeTypes.ACTION) {
       newNodeType = nodeTypes.OUTCOME;
     } else if (nodeType === nodeTypes.OUTCOME  ) {
       newNodeType = nodeTypes.DECISION;
-    }
+    } 
 
     if (newNodeType) {
       setNewNode({ ...newNode, nodeType: newNodeType});
@@ -193,6 +200,26 @@ const TreeVisualization = () => {
     setSelectedNode((prevNode) => ({ ...prevNode, [name]: value }));
   };
 
+  const allowEdit = (nodeDatum) => {
+    return (nodeDatum.nodeType !== nodeTypes.START) && (nodeDatum.nodeType !== nodeTypes.EXIT);
+  }
+
+  const allowDelete = (nodeDatum) => { 
+    return (nodeDatum.nodeType !== nodeTypes.START);
+  }
+
+  const allowAdd = (nodeDatum) => {
+    if (nodeDatum.nodeType === nodeTypes.START) {
+      return true
+    }
+    if (nodeDatum.nodeType === nodeTypes.EXIT) {
+      return false;
+    }
+    return true;
+  }
+
+
+
   return (
     <div className="container">
 
@@ -202,14 +229,24 @@ const TreeVisualization = () => {
           <DialogContentText>
             Please enter the details of the new node.
           </DialogContentText>
-          {newNode.nodeType === nodeTypes.DECISION && (
+          {((newNode.nodeType === nodeTypes.DECISION) || (newNode.nodeType === nodeTypes.EXIT))
+          && (
             <>
+            <FormControlLabel control={<Switch checked={newNode.nodeType === nodeTypes.EXIT} onChange={()=>{setNewNode({ ...newNode, nodeType: newNode.nodeType === nodeTypes.EXIT ? nodeTypes.DECISION : nodeTypes.EXIT })}} />} label = "Exit Node" />
+            { (newNode.nodeType === nodeTypes.DECISION ) && (
               <label>
                                 Decision Point:
-                <input type="text" name="name" onChange={handleAddNodeChange} />
+                <input type="text" name="name" onChange={(handleAddNodeChange)} />
               </label>
+            )}
+            { (newNode.nodeType === nodeTypes.EXIT ) && (
+              <Alert severity="info">
+                  Add an exit node
+              </Alert>
+            )}
             </>
           )}
+          
           {newNode.nodeType === nodeTypes.ACTION && (
             <>
                           <label>
@@ -294,9 +331,10 @@ const TreeVisualization = () => {
         
         {/* provide a nice layout of three buttons */}
         <Stack spacing={2} direction="column">
-        <Button onClick={() => {setShowAddNodeDialog(true)}} color='primary' variant="contained">Add Node</Button>
-        <Button onClick={() => {setShowDeleteNodeDialog(true)}} color="error" variant="contained">Delete Selected Node</Button>
-        <Button onClick={() => {setShowEditNodeDialog(true)}} color="primary" variant="contained">Edit Selected Node</Button>
+        
+        {allowAdd(selectedNode) && <Button onClick={() => {setShowAddNodeDialog(true)}} color='primary' variant="contained">Add Node</Button>}
+        {allowDelete(selectedNode) && <Button onClick={() => {setShowDeleteNodeDialog(true)}} color="error" variant="contained">Delete Selected Node</Button>}
+        {allowEdit(selectedNode) && <Button onClick={() => {setShowEditNodeDialog(true)}} color="primary" variant="contained">Edit Selected Node</Button>}
         </Stack>
           </>
           )
