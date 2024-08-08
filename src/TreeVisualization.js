@@ -53,22 +53,25 @@ const initialTreeData = {
   name: 'Start',
   nodeType: nodeTypes.START,
   probability: 1,
-  cost: 0,
+  cost: 10,
+  expected_cost: null,
   children: [
     {
       id: uuidv4(),
       name: 'Action 1',
       nodeType: nodeTypes.ACTION,
-      probability: 0.5,
-      cost: 0,
+      probability: 0.4,
+      cost: 100,
+      expected_cost: null,
       children: []
     },
     {
       id: uuidv4(),
       name: 'Action 2',
       nodeType: nodeTypes.ACTION,
-      probability: 0.5,
-      cost: 100,
+      probability: 0.6,
+      cost: 500,
+      expected_cost: null,
       children: []
     }
   ],
@@ -82,6 +85,9 @@ const TreeVisualization = () => {
   const [showEditNodeDialog, setShowEditNodeDialog] = useState(false);
   const [showAddNodeDialog, setShowAddNodeDialog] = useState(false); 
   const [showDeleteNodeDialog, setShowDeleteNodeDialog] = useState(false);
+  const [showProbabilityError, setShowProbabilityError] = useState(false);
+  const [showCostError, setShowCostError] = useState(false);
+  const [showUpdateExpectedCostAlert, setShowUpdateExpectedCostAlert] = useState(false);
   const treeContainerRef = useRef(null);
 
   useEffect(() => {
@@ -95,6 +101,24 @@ const TreeVisualization = () => {
   }, [treeContainerRef.current]);
 
   const editNode = () => {
+    setShowProbabilityError(false);
+    setShowCostError(false);
+    let returnDueToError = false;
+    selectedNode.probability = parseFloat(selectedNode.probability);
+    selectedNode.cost = parseFloat(selectedNode.cost);
+    // Validate the probability value
+    if (selectedNode.probability <= 0 || selectedNode.probability > 1) {
+      setShowProbabilityError(true);
+      returnDueToError = true;
+    }
+    // Validate the cost value
+    if (selectedNode.cost < 0) {
+      setShowCostError(true);
+      returnDueToError = true;
+    }
+    if (returnDueToError) {
+      return;
+    }
     const updatedTree = { ...treeData };
     console.log('updatedTree:', updatedTree);
     console.log('selectedNode:', selectedNode);
@@ -113,9 +137,28 @@ const TreeVisualization = () => {
     editNodeRecursive(updatedTree);
     setTreeData(updatedTree);
     setSelectedNode(null);
+    setShowEditNodeDialog(false)
   };
 
   const addNode = () => {
+    setShowProbabilityError(false);
+    setShowCostError(false);
+    selectedNode.probability = parseFloat(selectedNode.probability);
+    selectedNode.cost = parseFloat(selectedNode.cost);
+    let returnDueToError = false;
+    // Validate the probability value
+    if (newNode.probability <= 0 || newNode.probability > 1) {
+      setShowProbabilityError(true);
+      returnDueToError = true;
+    }
+    // Validate the cost value
+    if (newNode.cost < 0) {
+      setShowCostError(true);
+      returnDueToError = true;
+    }
+    if (returnDueToError) {
+      return;
+    }
     const updatedTree = { ...treeData };
     console.log('updatedTree:', updatedTree); 
     const { ...nodeDetails } = newNode;
@@ -141,6 +184,7 @@ const TreeVisualization = () => {
 
     addNodeRecursive(updatedTree);
     setTreeData(updatedTree);
+    setShowAddNodeDialog(false);
     setSelectedNode(null);
   };
 
@@ -167,7 +211,8 @@ const TreeVisualization = () => {
   const handleNodeClick = (nodeDatum) => {
     console.log('Node clicked:', nodeDatum);
     setSelectedNode(nodeDatum);
-
+    setShowCostError(false);
+    setShowProbabilityError(false);
     const nodeType = nodeDatum.nodeType;
     console.log('selected nodeType:', nodeType);
     let newNodeType = null;
@@ -193,11 +238,15 @@ const TreeVisualization = () => {
   const handleAddNodeChange = (e) => {
     const { name, value } = e.target;
     setNewNode((prevNode) => ({ ...prevNode, [name]: value }));
+    setShowCostError(false);
+    setShowProbabilityError(false);
   };
 
   const handleSelectedNodeChange = (e) => {
     const { name, value } = e.target;
     setSelectedNode((prevNode) => ({ ...prevNode, [name]: value }));
+    setShowCostError(false);
+    setShowProbabilityError(false);
   };
 
   const allowEdit = (nodeDatum) => {
@@ -218,11 +267,51 @@ const TreeVisualization = () => {
     return true;
   }
 
+  const updateExpectedCost = () => {
+    const updatedTree = { ...treeData };
+    // calculate expected cost bottom up. 
+    // The expected cost of a node is the weighted sum of the expected cost of its children plus the cost of the node.
+    // The child probability should be normalized to sum to 1.
+    const calculateExpectedCost = (node) => {
+      // node.children is an array of children, if not empty, calculate the expected cost
+      if (node.children.length > 0) {
+        let totalProbability = 0;
+        let totalExpectedCost = 0;
+
+        // Calculate the total probability
+        node.children.forEach((child) => {
+          totalProbability += child.probability;
+        });
+
+        // Normalize the probability
+        if (totalProbability !== 1){
+          node.children.forEach((child) => {
+            child.probability = child.probability / totalProbability;
+          });
+          setShowUpdateExpectedCostAlert(true);
+        }
+
+        // Calculate the expected cost
+        node.children.forEach((child) => {
+          calculateExpectedCost(child);
+          totalExpectedCost += child.expected_cost * child.probability;
+        });
+          
+        node.expected_cost = totalExpectedCost + node.cost;
+      } else {
+        node.expected_cost = node.cost;
+      }
+    };
+
+    // start from the root node
+    calculateExpectedCost(updatedTree);
+    setTreeData(updatedTree);
+    setSelectedNode(null);
+  }
 
 
   return (
     <div className="container">
-
       <Dialog open={showAddNodeDialog} onClose={() => {setShowAddNodeDialog(false)}}>
         <DialogTitle>Add a new Node</DialogTitle>
         <DialogContent>
@@ -248,41 +337,32 @@ const TreeVisualization = () => {
           )}
           
           {newNode.nodeType === nodeTypes.ACTION && (
-            <>
-                          <label>
+            
+              <label>
                                 Action Name:
                 <input type="text" name="name" onChange={handleAddNodeChange} />
               </label>
-              <label>
-                                Cost:
-                <input type="number" name="cost" onChange={handleAddNodeChange} />
-              </label>
-              <label>
-                                Probability:
-                <input type="number" name="probability" onChange={handleAddNodeChange} />
-              </label>
-            </>
+        
           )}
           {newNode.nodeType === nodeTypes.OUTCOME && (
-            <>
+            
                           <label>
                                 Outcome:
                 <input type="text" name="name" onChange={handleAddNodeChange} />
               </label>
-              <label>
-                                Cost:
-                <input type="number" name="cost" onChange={handleAddNodeChange} />
-              </label>
-              <label>
-                                Probability:
-                <input type="number" name="probability" onChange={handleAddNodeChange} />
-              </label>
-            </>
+              
+            
           )}
+          {/* Default cost is 0 */}
+          <label>Cost:<input type="number" name="cost" onChange={handleAddNodeChange} defaultValue={0} min={0}/></label>
+          {showCostError && <Alert severity="error" > The value of cost must be greater than or equal to 0.</Alert>}
+          {/* Default probability is 1 */}
+          <label>Probability:<input type="number" name="probability" onChange={handleAddNodeChange} defaultValue={1} min={0.01} max={1} step={0.1}/></label>
+          {showProbabilityError && <Alert severity="error" > The value of probability must be between 0 and 1.</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {setShowAddNodeDialog(false)}} color="error" variant="contained">Cancel</Button>
-          <Button onClick={() => {addNode(); setShowAddNodeDialog(false)}} color="primary" autoFocus variant="contained">Add Node</Button>
+          <Button onClick={() => {addNode()}} color="primary" autoFocus variant="contained">Add Node</Button>
         </DialogActions>
       </Dialog>
 
@@ -306,17 +386,22 @@ const TreeVisualization = () => {
             Please enter the details of the selected node.
           </DialogContentText>
           <label> Name: <input type="text" name="name" onChange={handleSelectedNodeChange} /></label>
-          <label> Cost: <input type="number" name="cost" onChange={handleSelectedNodeChange} /></label>
-          <label> Probability: <input type="number" name="probability" onChange={handleSelectedNodeChange} /></label>
+          {/* Default cost is 0 */}
+          <label>Cost:<input type="number" name="cost" onChange={handleSelectedNodeChange} defaultValue={0} min={0}/></label>
+          {showCostError && <Alert severity="error" > The value of cost must be greater than or equal to 0.</Alert>}
+          {/* Default probability is 1 */}
+          <label>Probability:<input type="number" name="probability" onChange={handleSelectedNodeChange} defaultValue={1} min={0.01} max={1} step={0.1}/></label>
+          {showProbabilityError && <Alert severity="error" > The value of probability must be between 0 and 1.</Alert>}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => {setShowEditNodeDialog(false)}} color="error" variant="contained">Cancel</Button>
-          <Button onClick={() => {editNode(); setShowEditNodeDialog(false)}} color="primary" autoFocus variant="contained">Edit Node</Button>
+          <Button onClick={() => {editNode()}} color="primary" autoFocus variant="contained">Edit Node</Button>
         </DialogActions>
       </Dialog>
       
       <div className="modal-panel">
       <h1>Decision Tree Visualization</h1>
+      {showUpdateExpectedCostAlert && <Alert severity="warning" onClose={() => {setShowUpdateExpectedCostAlert(false)}}> The probability of the children of a node should sum to 1. The probabilities have been normalized.</Alert>}
 
         {selectedNode && (
           <>
@@ -327,14 +412,16 @@ const TreeVisualization = () => {
             <p>Name: {selectedNode.name}</p>
             <p>Cost: {selectedNode.cost}</p>
             <p>Probability: {selectedNode.probability}</p>
+            {selectedNode.expected_cost && <p>Expected Cost: {parseInt(selectedNode.expected_cost)}</p>}
           </div>
         
         {/* provide a nice layout of three buttons */}
         <Stack spacing={2} direction="column">
         
-        {allowAdd(selectedNode) && <Button onClick={() => {setShowAddNodeDialog(true)}} color='primary' variant="contained">Add Node</Button>}
-        {allowDelete(selectedNode) && <Button onClick={() => {setShowDeleteNodeDialog(true)}} color="error" variant="contained">Delete Selected Node</Button>}
-        {allowEdit(selectedNode) && <Button onClick={() => {setShowEditNodeDialog(true)}} color="primary" variant="contained">Edit Selected Node</Button>}
+        {allowAdd(selectedNode) && <Button onClick={() => {setShowCostError(false);setShowProbabilityError(false);setShowAddNodeDialog(true)}} color='primary' variant="contained">Add Node</Button>}
+        {allowDelete(selectedNode) && <Button onClick={() => {setShowCostError(false);setShowProbabilityError(false);setShowDeleteNodeDialog(true)}} color="error" variant="contained">Delete Selected Node</Button>}
+        {allowEdit(selectedNode) && <Button onClick={() => {setShowCostError(false);setShowProbabilityError(false);setShowEditNodeDialog(true)}} color="success" variant="contained">Edit Selected Node</Button>}
+        <Button onClick={updateExpectedCost} color="primary" variant="outlined">Update Expected Cost</Button>
         </Stack>
           </>
           )
