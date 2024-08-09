@@ -1,92 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { v4 as uuidv4 } from 'uuid';
-import { Alert, List, ListItem, Avatar, ListItemText, Switch, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, ListItemAvatar } from '@mui/material';
+import { Alert, Switch, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel } from '@mui/material';
+import { Box, Drawer, Grid, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
+import FigureLegend from './FigureLegend';
+import SelectedNodeDetails from './SelectedNodeDetails';
+import { drawerWidth, nodeColors, nodeTypes, initialTreeData, renderCustomNodeElement } from './appConfig';
 
-const nodeTypes = {
-  START: 'start', // start is a special decision node can not be deleted.
-  DECISION: 'decision', // decision node can have parent of one outcome or null, and children of one or more actions.
-  ACTION: 'action', // action node can have parent of one decision, and children of one or more outcomes.
-  OUTCOME: 'outcome', // outcome node can have parent of one action, and children of one decision.
-  EXIT: 'exit', // exit is a special outcome node can not have children.
-};
-
-const nodeColors = {
-  START: 'lightblue',
-  DECISION: 'lightgreen',
-  ACTION: 'black',
-  OUTCOME: 'lightcoral',
-  EXIT: 'lightgray',
-}
-
-const renderCustomNodeElement = ({ nodeDatum, toggleNode }) => {
-  let color;
-  let word;
-  switch (nodeDatum.nodeType) {
-    case nodeTypes.START:
-      word = 'S'
-      color = nodeColors.START;
-      break;
-    case nodeTypes.DECISION:
-      word = 'D'
-      color = nodeColors.DECISION;
-      break;
-    case nodeTypes.ACTION:
-      word = 'A'
-      color = nodeColors.ACTION;
-      break;
-    case nodeTypes.OUTCOME:
-      word = 'O'
-      color = nodeColors.OUTCOME;
-      break;
-    default:
-      word = 'E'
-      color = nodeColors.EXIT;
-  }
-
-  return (
-    <g>
-      {/* Add word into the circle */}
-      <text fill="black" strokeWidth="1" x="-10">
-        {word}
-      </text>
-      <circle fill={color} r="20" onClick={() => toggleNode(nodeDatum)} />
-      
-      <text fill="black" strokeWidth="1" x="30">
-        {nodeDatum.name}
-      </text>
-    </g>
-  );
-};
-
-const initialTreeData = {
-  id: uuidv4(), // Unique identifier for the node
-  name: 'Start',
-  nodeType: nodeTypes.START,
-  probability: 1,
-  cost: 10,
-  expected_cost: null,
-  children: [
-    {
-      id: uuidv4(),
-      name: 'Action 1',
-      nodeType: nodeTypes.ACTION,
-      probability: 0.4,
-      cost: 100,
-      expected_cost: null,
-      children: []
-    },
-    {
-      id: uuidv4(),
-      name: 'Action 2',
-      nodeType: nodeTypes.ACTION,
-      probability: 0.6,
-      cost: 500,
-      expected_cost: null,
-      children: []
-    }
-  ],
-};
 
 const TreeVisualization = () => {
   const [treeData, setTreeData] = useState(initialTreeData);
@@ -254,8 +174,8 @@ const TreeVisualization = () => {
       newNodeProbability = 1;
     }
 
-   
-    setNewNode({...newNode, nodeType: newNodeType, name: newNodeName, cost: newNodeCost, probability: newNodeProbability });
+
+    setNewNode({ ...newNode, nodeType: newNodeType, name: newNodeName, cost: newNodeCost, probability: newNodeProbability });
   };
 
   const handleAddNodeChange = (e) => {
@@ -329,9 +249,12 @@ const TreeVisualization = () => {
     setSelectedNode(null);
   }
 
+  
+
 
   return (
     <div className="container">
+
       <Dialog open={showAddNodeDialog} onClose={() => { setShowAddNodeDialog(false) }}>
         <DialogTitle>Add a new Node</DialogTitle>
         <DialogContent>
@@ -360,14 +283,14 @@ const TreeVisualization = () => {
                 {newNode.nodeType === nodeTypes.ACTION ? "Action Name" : "Outcome Name"}
                 <input type="text" name="name" onChange={handleAddNodeChange} defaultValue={newNode.name} />
               </label>
-              
+
               {newNode.nodeType === nodeTypes.ACTION && (
-              <>
-              <label>Cost:<input type="number" name="cost" onChange={handleAddNodeChange} defaultValue={newNode.cost} min={0} /></label>
-              {showCostError && <Alert severity="error" > The value of cost must be greater than or equal to 0.</Alert>}
-              </>
+                <>
+                  <label>Cost:<input type="number" name="cost" onChange={handleAddNodeChange} defaultValue={newNode.cost} min={0} /></label>
+                  {showCostError && <Alert severity="error" > The value of cost must be greater than or equal to 0.</Alert>}
+                </>
               )}
-      
+
               <label>Probability:<input type="number" name="probability" onChange={handleAddNodeChange} defaultValue={newNode.probability} min={0.01} max={1} step={0.1} /></label>
               {showProbabilityError && <Alert severity="error" > The value of probability must be between 0 and 1.</Alert>}
             </>
@@ -413,66 +336,21 @@ const TreeVisualization = () => {
           <Button onClick={() => { editNode() }} color="primary" autoFocus variant="contained">Edit Node</Button>
         </DialogActions>
       </Dialog>
+        
+        
 
       <div className="modal-panel">
-        <h1>Decision Tree Visualization</h1>
+      <h1>Decision Tree Visualization</h1>
         <div>
-        <List>
-          <ListItem alignItems="flex-start" >
-            <ListItemAvatar>
-              <Avatar style={{ backgroundColor: nodeColors.START }}>
-                S
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Start Node" />
-          </ListItem>
-          <ListItem alignItems="flex-start">
-            <ListItemAvatar>
-              <Avatar style={{ backgroundColor: nodeColors.DECISION }}>
-                D
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Decision Node" />
-          </ListItem>
-          <ListItem alignItems="flex-start">
-            <ListItemAvatar>
-              <Avatar style={{ backgroundColor: nodeColors.ACTION }}>
-                A
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Action Node" />
-          </ListItem>
-          <ListItem alignItems="flex-start">
-            <ListItemAvatar>
-              <Avatar style={{ backgroundColor: nodeColors.OUTCOME }}>
-                O
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Outcome Node" />
-          </ListItem>
-          <ListItem alignItems="flex-start">
-            <ListItemAvatar>
-              <Avatar style={{ backgroundColor: nodeColors.EXIT }}>
-                E
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText primary="Exit Node" />
-          </ListItem>
-        </List>
-      </div>
+          <FigureLegend />
+        </div>
+        
         {showUpdateExpectedCostAlert && <Alert severity="warning" onClose={() => { setShowUpdateExpectedCostAlert(false) }}> The probability of the children of a node should sum to 1. The probabilities have been normalized.</Alert>}
 
         {selectedNode && (
           <>
-            <h3>Selected node</h3>
-            {/* <pre>{JSON.stringify(selectedNode, null)}</pre> */}
-            <div>
-              <p>Node Type: {selectedNode.nodeType}</p>
-              <p>Name: {selectedNode.name}</p>
-              <p>Cost: {selectedNode.cost}</p>
-              <p>Probability: {selectedNode.probability}</p>
-              {selectedNode.expected_cost && <p>Expected Cost: {parseInt(selectedNode.expected_cost)}</p>}
-            </div>
+                  <SelectedNodeDetails selectedNode={selectedNode} />
+
 
             {/* provide a nice layout of three buttons */}
             <Stack spacing={2} direction="column">
