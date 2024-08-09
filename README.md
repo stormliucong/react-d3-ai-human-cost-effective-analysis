@@ -1,16 +1,16 @@
-# Interactive Tree Structure Visualization
+# AI-human collaboration cost analysis
 
-This React program aims to develop an interactive tree-structure visualization. The program supports the use of external libraries if available.
+This React program aims to develop an interactive tree-structure visualization for decision makings. The program supports the use of external libraries if available. 
 
 ## Node Types
 
 There are five types of nodes in the tree:
 
-1. **Start Node**: Unique in the graph.
-2. **Decision Nodes**: Attributes include [id, name].
-3. **Action Nodes**: Attributes include [id, action_name, cost, probability].
-4. **Outcome Nodes**: Attributes include [id, name, cost, probability].
-5. **Exit Nodes**: No specific attributes.
+1. **Start Node**: Unique in the graph. It is a special type of decision node.
+2. **Decision Nodes**: Attributes include *name, expected_cost*.
+3. **Action Nodes**: Attributes include *name, probability, cost, expected_cost*.
+4. **Outcome Nodes**: Attributes include *name, probability, cost, expected_cost*.
+5. **Exit Nodes**: No specific attributes. It is a special type of action node.
 
 ## Graph Building Options
 
