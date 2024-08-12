@@ -2,10 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { v4 as uuidv4 } from 'uuid';
 import { Alert, Switch, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel } from '@mui/material';
-import { Box, Drawer, Grid, List, ListItem, ListItemText, Paper, Typography } from '@mui/material';
 import FigureLegend from './FigureLegend';
 import SelectedNodeDetails from './SelectedNodeDetails';
-import { drawerWidth, nodeColors, nodeTypes, initialTreeData, renderCustomNodeElement } from './appConfig';
+import { nodeTypes, initialTreeData, renderCustomNodeElement } from './appConfig';
 
 
 const TreeVisualization = () => {
@@ -29,7 +28,7 @@ const TreeVisualization = () => {
         y: dimensions.height / 4,
       });
     }
-  }, [treeContainerRef.current]);
+  }, []);
 
   const editNode = () => {
     setShowProbabilityError(false);

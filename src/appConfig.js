@@ -69,19 +69,19 @@ export const initialTreeData = {
   children: [
     {
       id: uuidv4(),
-      name: 'Action 1',
+      name: 'Gene Panel Test',
       nodeType: nodeTypes.ACTION,
-      probability: 0.4,
-      cost: 100,
+      probability: 0.8,
+      cost: 500,
       expected_cost: null,
       children: []
     },
     {
       id: uuidv4(),
-      name: 'Action 2',
+      name: 'Whole Exome Sequencing',
       nodeType: nodeTypes.ACTION,
-      probability: 0.6,
-      cost: 500,
+      probability: 0.2,
+      cost: 1500,
       expected_cost: null,
       children: []
     }

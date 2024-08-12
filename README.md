@@ -18,13 +18,14 @@ There are five types of nodes in the tree:
    - When a user clicks on the start node or a decision node, they can create one or more action nodes connected by branches.
    - A decision node can link to multiple action nodes.
 
-2. **Action Nodes**:
+2. **Action Nodes and Exit Nodes**:
    - When a user clicks on an action node, they can create one or more outcome nodes.
    - An action node can link to multiple outcome nodes.
+   - Exit node is a special type of Action node, which has no children.
 
 3. **Outcome Nodes**:
    - When a user clicks on an outcome node, they can create either an exit node or a decision node.
-   - An outcome node can link to only one decision node.
+   - An outcome node can link to one or more decision node.
 
 4. **Node Deletion**:
    - All nodes can be deleted except for the start node.

@@ -14,7 +14,7 @@ const NodeListItem = ({ label, color, letter }) => (
     </ListItem>
   );
 
-const FigureLegend = ({ }) => {
+const FigureLegend = () => {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
