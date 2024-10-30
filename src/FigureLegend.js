@@ -16,7 +16,7 @@ const NodeListItem = ({ label, color, letter }) => (
 
 const FigureLegend = () => {
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
 
         <List>
         <NodeListItem label="Start Node" color={nodeColors.START} letter="S" />

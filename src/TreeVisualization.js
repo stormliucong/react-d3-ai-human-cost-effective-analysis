@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { v4 as uuidv4 } from 'uuid';
-import { Alert, Switch, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import { Grid, Alert, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FigureLegend from './FigureLegend';
 import SelectedNodeDetails from './SelectedNodeDetails';
 import { nodeTypes, initialTreeData, renderCustomNodeElement } from './appConfig';
-import { tree } from 'd3';
-import { show } from 'react-modal/lib/helpers/ariaAppHider';
-
 
 const TreeVisualization = () => {
   const [treeData, setTreeData] = useState(initialTreeData);
@@ -32,6 +32,18 @@ const TreeVisualization = () => {
       });
     }
   }, []);
+
+  const VisuallyHiddenInput = styled('input')({
+    clip: 'rect(0 0 0 0)',
+    clipPath: 'inset(50%)',
+    height: 1,
+    overflow: 'hidden',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    whiteSpace: 'nowrap',
+    width: 1,
+  });
 
   const editNode = () => {
     setShowProbabilityError(false);
@@ -382,7 +394,44 @@ const TreeVisualization = () => {
         <div>
           <FigureLegend />
         </div>
-        
+        <Stack spacing={2} direction="column">
+          {/* A button with download icon to download treeData as a json file */}
+          <Button onClick={() => {
+            const element = document.createElement("a");
+            const file = new Blob([JSON.stringify(treeData)], { type: 'text/plain' });
+            element.href = URL.createObjectURL(file);
+            element.download = "decision_tree.json";
+            document.body.appendChild(element); // Required for this to work in FireFox
+            element.click();
+          }} 
+          variant="contained" 
+          color="primary"
+          startIcon={<CloudDownloadIcon />}>Download Tree
+          </Button>
+        {/* A material ui style button to with upload icon to upload json file to setTreeData */}
+        <Button
+          component="label"
+          role={undefined}
+          variant="outlined"
+          tabIndex={-1}
+          startIcon={<CloudUploadIcon />}
+        >
+          Upload files
+          <VisuallyHiddenInput
+            type="file"
+            onChange={(event) => {
+              const file = event.target.files[0];
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                const contents = e.target.result;
+                setTreeData(JSON.parse(contents));
+              };
+              reader.readAsText(file);
+            }
+            }
+          />
+        </Button>
+    
         {showUpdateExpectedCostAlert && <Alert severity="warning" onClose={() => { setShowUpdateExpectedCostAlert(false) }}> The probability of the children of a node should sum to 1. The probabilities have been normalized.</Alert>}
         {/* infomation banner to show current expected cost at root node , if it is not null */}
         {treeData.expected_cost !== null && <Alert severity="info">The expected cost of the tree is {parseInt(treeData.expected_cost)}</Alert>}
@@ -396,22 +445,27 @@ const TreeVisualization = () => {
 
 
             {/* provide a nice layout of three buttons */}
-            <Stack spacing={2} direction="column">
 
-              {allowAdd(selectedNode) && <Button onClick={() => { setShowCostError(false); setShowProbabilityError(false); setShowAddNodeDialog(true) }} color='primary' variant="contained">Add Node</Button>}
+              
+              {allowAdd(selectedNode) && <Button onClick={() => { setShowCostError(false); setShowProbabilityError(false); setShowAddNodeDialog(true) }} color='secondary' variant="contained">Add Node</Button>}
               {allowDelete(selectedNode) && <Button onClick={() => { setShowCostError(false); setShowProbabilityError(false); setShowDeleteNodeDialog(true) }} color="error" variant="contained">Delete Node</Button>}
               {allowEdit(selectedNode) && <Button onClick={() => { setShowCostError(false); setShowProbabilityError(false); setShowEditNodeDialog(true) }} color="success" variant="contained">Edit Node</Button>}
-              <Button onClick={updateExpectedCost} color="primary" variant="outlined">Update Expected Cost</Button>
-            </Stack>
+              <Button onClick={updateExpectedCost} color="primary" variant="contained">Update Expected Cost</Button>
+            
           </>
+         
         )
         }
-        {/* <h2>Tree Details</h2>
-        <pre>{JSON.stringify(treeData, null, 2)}</pre> */}
+        </Stack>
+
+        
+        
       </div>
       <div className="tree-panel" ref={treeContainerRef}>
         <Tree data={treeData} collapsible={false} translate={translate} onNodeClick={handleNodeClick} orientation={"vertical"} renderCustomNodeElement={(rd3tProps) => renderCustomNodeElement({ ...rd3tProps, toggleNode: handleNodeClick })} />
       </div>
+
+      
 
     </div>
   );

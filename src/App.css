@@ -28,18 +28,3 @@ input {
   padding: 8px;
   margin-top: 5px;
 }
-
-button {
-  display: block;
-  margin-top: 20px;
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #0056b3;
-}
