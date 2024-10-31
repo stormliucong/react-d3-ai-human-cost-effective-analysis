@@ -4,9 +4,9 @@ import { nodeColors } from './appConfig';
 
 
 const NodeListItem = ({ label, color, letter }) => (
-    <ListItem style={{ padding: '10', display: 'flex', alignItems: 'center' }}>
+    <ListItem style={{ padding: '0', display: 'flex', alignItems: 'center' }}>
       <ListItemAvatar>
-        <Avatar style={{ backgroundColor: color, border: '0px solid black' }}>
+        <Avatar style={{ backgroundColor: color, border: '2px solid black' }}>
           {letter}
         </Avatar>
       </ListItemAvatar>
@@ -18,12 +18,12 @@ const FigureLegend = () => {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
 
-        <List>
-        <NodeListItem label="Start Node" color={nodeColors.START} letter="S" />
-        <NodeListItem label="Decision Node" color={nodeColors.DECISION} letter="D" />
-        <NodeListItem label="Action Node" color={nodeColors.ACTION} letter="A" />
-        <NodeListItem label="Outcome Node" color={nodeColors.OUTCOME} letter="O" />
-        <NodeListItem label="Exit Node" color={nodeColors.EXIT} letter="E" />
+        <List sx={{ display: 'flex', flexDirection: 'row', gap: '16px' }}>
+        <NodeListItem label="Start" color={nodeColors.START} letter="S" />
+        <NodeListItem label="Decision" color={nodeColors.DECISION} letter="D" /> 
+        <NodeListItem label="Action" color={nodeColors.ACTION} letter="A" />
+        <NodeListItem label="Outcome" color={nodeColors.OUTCOME} letter="O" />
+        <NodeListItem label="Exit" color={nodeColors.EXIT} letter="E" />
       </List>
     </Box>
     );

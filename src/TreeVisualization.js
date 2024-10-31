@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Tree from 'react-d3-tree';
 import { v4 as uuidv4 } from 'uuid';
-import { Grid, Alert, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, Radio, RadioGroup } from '@mui/material';
+import { Alert, Stack, Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, Radio, RadioGroup } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import FigureLegend from './FigureLegend';
 import SelectedNodeDetails from './SelectedNodeDetails';
 import { nodeTypes, initialTreeData, renderCustomNodeElement } from './appConfig';
+ 
 
 const TreeVisualization = () => {
   const [treeData, setTreeData] = useState(initialTreeData);
@@ -291,7 +292,7 @@ const TreeVisualization = () => {
 
 
   return (
-    <div className="container">
+    <div className='container'>
 
       <Dialog open={showAddNodeDialog} onClose={() => { setShowAddNodeDialog(false) }}>
         <DialogTitle>Add a new Node</DialogTitle>
@@ -388,12 +389,10 @@ const TreeVisualization = () => {
       </Dialog>
         
         
+      
+      <div className='modal-panel'>
 
-      <div className="modal-panel">
-      <h1>Decision Tree Visualization</h1>
-        <div>
-          <FigureLegend />
-        </div>
+      
         <Stack spacing={2} direction="column">
           {/* A button with download icon to download treeData as a json file */}
           <Button onClick={() => {
@@ -459,12 +458,17 @@ const TreeVisualization = () => {
         </Stack>
 
         
-        
+      
       </div>
+      
       <div className="tree-panel" ref={treeContainerRef}>
-        <Tree data={treeData} collapsible={false} translate={translate} onNodeClick={handleNodeClick} orientation={"vertical"} renderCustomNodeElement={(rd3tProps) => renderCustomNodeElement({ ...rd3tProps, toggleNode: handleNodeClick })} />
+      <div className='tree-stats-container'>
+        <FigureLegend />
       </div>
-
+        <Tree data={treeData} collapsible={false} translate={translate} onNodeClick={handleNodeClick} orientation={"vertical"} renderCustomNodeElement={(rd3tProps) => renderCustomNodeElement({ ...rd3tProps, toggleNode: handleNodeClick })} />
+      
+      </div>
+      
       
 
     </div>
